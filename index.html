@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QQ群聊AI氛围官 - Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            height: 90vh;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #12c2e9, #c471ed, #f64f59);
+            color: white;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .group-avatar {
+            width: 50px;
+            height: 50px;
+            background: white;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .group-info h2 {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .group-info p {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .scenario-selector {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .chat-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.ai {
+            flex-direction: row;
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .ai .avatar {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .user .avatar {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+        }
+
+        .message-content {
+            max-width: 60%;
+        }
+
+        .message-bubble {
+            padding: 12px 16px;
+            border-radius: 12px;
+            line-height: 1.5;
+            font-size: 14px;
+        }
+
+        .ai .message-bubble {
+            background: white;
+            color: #333;
+            border-bottom-left-radius: 4px;
+        }
+
+        .user .message-bubble {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message-info {
+            font-size: 11px;
+            color: #999;
+            margin-top: 5px;
+            padding: 0 5px;
+        }
+
+        .ai .message-info {
+            text-align: left;
+        }
+
+        .user .message-info {
+            text-align: right;
+        }
+
+        .system-message {
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            margin: 15px 0;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 8px;
+        }
+
+        .control-panel {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .typing-indicator.active {
+            display: flex;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+            padding: 12px 16px;
+            background: white;
+            border-radius: 12px;
+            border-bottom-left-radius: 4px;
+        }
+
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            background: #999;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .info-banner {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .highlight {
+            background: rgba(255, 255, 255, 0.3);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="info-banner">
+            🎉 <span class="highlight">QQ群聊AI氛围官</span> - 让每个群都有温度
+        </div>
+
+        <div class="header">
+            <div class="header-left">
+                <div class="group-avatar">🎮</div>
+                <div class="group-info">
+                    <h2>游戏爱好者交流群</h2>
+                    <p>在线成员: 42人</p>
+                </div>
+            </div>
+            <select class="scenario-selector" id="scenarioSelector">
+                <option value="scenario1">场景1: 新人入群破冰</option>
+                <option value="scenario2">场景2: 群冷场激活</option>
+                <option value="scenario3">场景3: 情绪关怀</option>
+                <option value="scenario4">场景4: 生日祝福</option>
+                <option value="scenario5">场景5: 群周年纪念</option>
+                <option value="scenario6">场景6: 冲突调解</option>
+            </select>
+        </div>
+
+        <div class="chat-area" id="chatArea">
+            <div class="system-message">欢迎来到群聊，AI氛围官已上线 🤖</div>
+        </div>
+
+        <div class="typing-indicator" id="typingIndicator">
+            <div class="avatar">🤖</div>
+            <div class="typing-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+
+        <div class="control-panel">
+            <button class="btn btn-primary" onclick="startDemo()">▶️ 开始演示</button>
+            <button class="btn btn-secondary" onclick="resetDemo()">🔄 重置</button>
+            <button class="btn btn-secondary" onclick="nextScenario()">⏭️ 下一场景</button>
+        </div>
+    </div>
+
+    <script>
+        const scenarios = {
+            scenario1: [
+                { type: 'system', text: '「小明」加入了群聊' },
+                { type: 'ai', name: 'QQ小氛', text: '欢迎 @小明 加入！👋\n\n看到大家最近都在讨论《黑神话悟空》，我有个问题想问问大家：你们都卡在哪个BOSS了？\n\n我看群里有大神3小时通关的，求带飞🚀', delay: 2000 },
+                { type: 'user', name: '老玩家张三', text: '哈哈欢迎新人！我卡在黄风怪那里好久了😭', delay: 3000 },
+                { type: 'user', name: '游戏大神', text: '@小明 有啥不懂的可以问我，我已经二周目了', delay: 2000 },
+                { type: 'user', name: '小明', text: '谢谢大家！我刚开始玩，确实有点难😅', delay: 2500 },
+                { type: 'ai', name: 'QQ小氛', text: '看来大家都很热情！@小明 群里还有个攻略文档，我发给你～\n\n另外每周五晚上8点是固定组队时间，欢迎一起来玩！', delay: 2000 }
+            ],
+            scenario2: [
+                { type: 'system', text: '群聊已沉默 45 分钟' },
+                { type: 'ai', name: 'QQ小氛', text: '发现大家都在默默学习📚\n\n来个小调查：这周最让你头疼的科目是啥？\n1️⃣ 高数（怀疑人生）\n2️⃣ 英语（单词背了就忘）\n3️⃣ 专业课（听不懂系列）', delay: 2000 },
+                { type: 'user', name: '学霸李四', text: '必须是高数啊！今天的题目做到怀疑智商', delay: 2500 },
+                { type: 'user', name: '英语苦手', text: '我选2，单词真的记不住😭', delay: 2000 },
+                { type: 'user', name: '王五', text: '专业课+1，老师讲的完全听不懂', delay: 2000 },
+                { type: 'ai', name: 'QQ小氛', text: '看来大家都有各自的难题！\n\n给大家推荐一下：\n📖 高数可以看看B站up主「宋浩老师」\n📝 背单词试试「墨墨背单词」的艾宾浩斯记忆法\n💡 专业课可以在群里互相讨论，三个臭皮匠顶个诸葛亮！\n\n大家一起加油💪', delay: 3000 }
+            ],
+            scenario3: [
+                { type: 'user', name: '小红', text: '唉，这次考试又挂了，感觉自己好废...😔', delay: 1000 },
+                { type: 'system', text: 'AI检测到负面情绪，正在分析...' },
+                { type: 'ai', name: 'QQ小氛', text: '@小红 看到你的消息了，抱抱你💙\n\n考试失利确实很难受，但这不代表你的全部价值。我注意到你上个月在群里分享的项目做得很棒，大家都很认可你的能力！\n\n要不要和群里的 @学霸李四 聊聊？他之前也遇到过类似情况，后来找到了适合自己的学习方法。', delay: 2500 },
+                { type: 'user', name: '学霸李四', text: '@小红 我大一的时候也挂过科，后来调整了学习方法就好多了。有空可以一起讨论下！', delay: 3000 },
+                { type: 'user', name: '小红', text: '谢谢大家关心🥺 感觉好多了', delay: 2000 },
+                { type: 'ai', name: 'QQ小氛', text: '另外给你推荐一下QQ频道里的「学习互助」板块，里面有很多过来人的经验分享，或许能帮到你～\n\n记住：一次失败不代表永远失败，调整心态继续加油！💪', delay: 2500 }
+            ],
+            scenario4: [
+                { type: 'system', text: '今天是「张三」的生日 🎂' },
+                { type: 'ai', name: 'QQ小氛', text: '🎉 今天是 @张三 的生日！\n\n还记得3个月前你刚入群时问的第一个问题吗？\n"有没有人一起组队打游戏？"\n\n现在你已经是群里的游戏大神了哈哈！\n\n祝你生日快乐！大家一起来送祝福吧👇', delay: 2000 },
+                { type: 'user', name: '小明', text: '生日快乐！🎂🎂🎂', delay: 1500 },
+                { type: 'user', name: '李四', text: '@张三 生日快乐！今晚组队庆祝！', delay: 1500 },
+                { type: 'user', name: '王五', text: '生快！感谢大神一直带我飞😄', delay: 1500 },
+                { type: 'user', name: '张三', text: '谢谢大家！没想到AI还记得我生日😭', delay: 2000 },
+                { type: 'ai', name: 'QQ小氛', text: '当然记得啦！群里每个人的重要时刻我都会记住～\n\n[已自动生成生日专属表情包]\n\n今晚8点组队庆祝，不见不散！🎮', delay: 2000 }
+            ],
+            scenario5: [
+                { type: 'system', text: '群建立满 1 周年纪念日 🎊' },
+                { type: 'ai', name: 'QQ小氛', text: '🎊 今天是咱们群建立1周年纪念日！\n\n这一年我们一起经历了：\n✅ 从5个人到50个人\n✅ 聊天记录突破10000条\n✅ 组织了3次线下聚会\n✅ 帮助8位成员找到实习/工作', delay: 2000 },
+                { type: 'ai', name: 'QQ小氛', text: '最高光时刻TOP3：\n1️⃣ 小明拿到腾讯offer，全群庆祝刷屏200条\n2️⃣ 深夜讨论人生意义，聊到凌晨3点\n3️⃣ 群友自发捐款帮助张三渡过难关\n\n感谢每一位成员，让这个群有温度💙', delay: 3000 },
+                { type: 'user', name: '群主', text: '感动哭了😭 这一年真的很精彩', delay: 2000 },
+                { type: 'user', name: '小明', text: '这个群改变了我的人生轨迹！', delay: 1500 },
+                { type: 'user', name: '张三', text: '永远感谢大家的帮助❤️', delay: 1500 },
+                { type: 'ai', name: 'QQ小氛', text: '[已生成周年纪念海报]\n\n未来一年，我们继续一起成长！\n下一个目标：100人大群！💪', delay: 2000 }
+            ],
+            scenario6: [
+                { type: 'system', text: '检测到群内可能存在误解冲突' },
+                { type: 'user', name: '小A', text: '@小B 你什么意思？我哪里做错了？', delay: 1000 },
+                { type: 'user', name: '小B', text: '我没说你做错，只是觉得这样不太好...', delay: 1500 },
+                { type: 'system', text: 'AI检测到潜在冲突，正在介入...' },
+                { type: 'ai', name: 'QQ小氛', text: '大家先冷静一下～\n\n我注意到可能有些误会，不如我们换个方式沟通？\n\n@小A 和 @小B 都是为了群好，只是表达方式不同。\n\n要不要我帮忙梳理一下大家的想法？', delay: 2500 },
+                { type: 'user', name: '小A', text: '好吧...可能我刚才语气重了', delay: 2000 },
+                { type: 'user', name: '小B', text: '我也没表达清楚，抱歉', delay: 1500 },
+                { type: 'ai', name: 'QQ小氛', text: '很高兴看到大家愿意沟通！💙\n\n群是大家的家，有不同意见很正常。\n重要的是互相理解，一起让群变得更好～\n\n来，击个掌和好吧！🤝', delay: 2500 },
+                { type: 'user', name: '小A', text: '🤝', delay: 1000 },
+                { type: 'user', name: '小B', text: '🤝', delay: 1000 }
+            ]
+        };
+
+        let currentScenario = 'scenario1';
+        let isPlaying = false;
+
+        function addMessage(type, name, text) {
+            const chatArea = document.getElementById('chatArea');
+
+            if (type === 'system') {
+                const systemMsg = document.createElement('div');
+                systemMsg.className = 'system-message';
+                systemMsg.textContent = text;
+                chatArea.appendChild(systemMsg);
+            } else {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${type}`;
+
+                const avatar = document.createElement('div');
+                avatar.className = 'avatar';
+                avatar.textContent = type === 'ai' ? '🤖' : '👤';
+
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'message-content';
+
+                const bubble = document.createElement('div');
+                bubble.className = 'message-bubble';
+                bubble.textContent = text;
+
+                const info = document.createElement('div');
+                info.className = 'message-info';
+                const now = new Date();
+                info.textContent = `${name} ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+                contentDiv.appendChild(bubble);
+                contentDiv.appendChild(info);
+
+                messageDiv.appendChild(avatar);
+                messageDiv.appendChild(contentDiv);
+
+                chatArea.appendChild(messageDiv);
+            }
+
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        function showTyping() {
+            document.getElementById('typingIndicator').classList.add('active');
+        }
+
+        function hideTyping() {
+            document.getElementById('typingIndicator').classList.remove('active');
+        }
+
+        async function playScenario(scenarioKey) {
+            if (isPlaying) return;
+            isPlaying = true;
+
+            const messages = scenarios[scenarioKey];
+
+            for (let i = 0; i < messages.length; i++) {
+                const msg = messages[i];
+
+                if (msg.type === 'ai') {
+                    showTyping();
+                    await sleep(msg.delay || 2000);
+                    hideTyping();
+                } else {
+                    await sleep(msg.delay || 1000);
+                }
+
+                addMessage(msg.type, msg.name, msg.text);
+            }
+
+            isPlaying = false;
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function startDemo() {
+            if (isPlaying) return;
+            const selector = document.getElementById('scenarioSelector');
+            currentScenario = selector.value;
+            resetDemo();
+            setTimeout(() => playScenario(currentScenario), 500);
+        }
+
+        function resetDemo() {
+            const chatArea = document.getElementById('chatArea');
+            chatArea.innerHTML = '<div class="system-message">欢迎来到群聊，AI氛围官已上线 🤖</div>';
+            hideTyping();
+            isPlaying = false;
+        }
+
+        function nextScenario() {
+            const selector = document.getElementById('scenarioSelector');
+            const options = selector.options;
+            let currentIndex = selector.selectedIndex;
+            currentIndex = (currentIndex + 1) % options.length;
+            selector.selectedIndex = currentIndex;
+            startDemo();
+        }
+
+        // 页面加载完成后自动播放第一个场景
+        window.addEventListener('load', () => {
+            setTimeout(() => startDemo(), 1000);
+        });
+    </script>
+</body>
+</html>
